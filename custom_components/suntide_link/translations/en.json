@@ -3,14 +3,31 @@
     "step": {
       "confirm": {
         "title": "Found your Suntide Link",
-        "description": "{device} is on your network. Add a Suntide cloud token for the plan, story and savings entities — or leave it blank for local sensors only (you can add it later by re-adding the integration).",
-        "data": { "cloud_token": "Suntide cloud token (optional)" }
+        "description": "{device} is on your network. Add a Suntide cloud token for the plan, story and savings entities \u2014 or leave it blank for local sensors only (you can add it later by re-adding the integration).",
+        "data": {
+          "cloud_token": "Suntide cloud token (optional)"
+        }
       },
       "user": {
         "title": "Suntide Link",
-        "data": { "host": "Link address (e.g. 192.168.0.42)" }
+        "data": {
+          "host": "Link address (e.g. 192.168.0.42)"
+        }
       }
     },
-    "abort": { "already_configured": "This Link is already set up." }
+    "abort": {
+      "already_configured": "This Link is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Suntide cloud token",
+        "description": "Paste a token from the Suntide app (Settings \u2192 Integrations). Leave empty to use local sensors only.",
+        "data": {
+          "cloud_token": "Cloud token"
+        }
+      }
+    }
   }
 }

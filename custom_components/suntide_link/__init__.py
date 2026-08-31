@@ -34,8 +34,11 @@ PLATFORMS = ["binary_sensor", "sensor"]
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = async_get_clientsession(hass)
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     host = entry.data[CONF_HOST]
-    token = entry.data.get(CONF_CLOUD_TOKEN)
+    # Options win over the original setup data, so a rotated token takes
+    # effect without deleting the device.
+    token = entry.options.get(CONF_CLOUD_TOKEN) or entry.data.get(CONF_CLOUD_TOKEN)
 
     async def fetch_local():
         try:
@@ -96,3 +99,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if ok:
         hass.data[DOMAIN].pop(entry.entry_id)
     return ok
+
+
+async def async_reload_entry(hass, entry) -> None:
+    """Re-read credentials when the options change."""
+    await hass.config_entries.async_reload(entry.entry_id)

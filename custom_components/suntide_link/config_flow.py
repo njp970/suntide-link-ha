@@ -12,12 +12,14 @@ from typing import Any
 
 import voluptuous as vol
 
+from homeassistant.core import callback
+
 try:
     # HA ≥2025: the canonical home
     from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 except ImportError:  # older HA
     from homeassistant.components.zeroconf import ZeroconfServiceInfo
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import ConfigEntry, OptionsFlow, ConfigFlow, ConfigFlowResult
 
 from .const import CONF_CLOUD_TOKEN, CONF_DEVICE_ID, CONF_HOST, DOMAIN
 
@@ -28,6 +30,11 @@ class SuntideLinkConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._host: str | None = None
         self._device_id: str | None = None
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(entry: ConfigEntry) -> "SuntideLinkOptionsFlow":
+        return SuntideLinkOptionsFlow()
 
     async def async_step_zeroconf(self, discovery: ZeroconfServiceInfo) -> ConfigFlowResult:
         self._host = str(discovery.ip_address)
@@ -64,4 +71,35 @@ class SuntideLinkConfigFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Required(CONF_HOST): str}),
+        )
+
+
+class SuntideLinkOptionsFlow(OptionsFlow):
+    """Change the cloud token without deleting the device.
+
+    A token is a credential, and credentials get rotated — so needing to
+    remove and re-add the integration to paste a new one is a design fault,
+    not a minor inconvenience. It cost a real evening: every cloud sensor
+    read "Unavailable" and the only cure was deleting the device.
+    """
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            token = (user_input.get(CONF_CLOUD_TOKEN) or "").strip()
+            return self.async_create_entry(data={CONF_CLOUD_TOKEN: token})
+        current = self.config_entry.options.get(
+            CONF_CLOUD_TOKEN, self.config_entry.data.get(CONF_CLOUD_TOKEN, "")
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_CLOUD_TOKEN,
+                        description={"suggested_value": current},
+                    ): str
+                }
+            ),
         )
