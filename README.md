@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/logo.png" alt="Suntide" width="128" />
+</p>
+
 # Suntide Link for Home Assistant
 
 Your solar inverter and battery in Home Assistant at **1-second resolution**,
