@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.png" alt="Suntide" width="128" />
+  <img src="https://raw.githubusercontent.com/njp970/suntide-link-ha/main/images/logo.png" alt="Suntide" width="128" />
 </p>
 
 # Suntide Link for Home Assistant
