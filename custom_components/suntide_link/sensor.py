@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -40,11 +42,19 @@ async def async_setup_entry(
         for key, name, unit, cls in LOCAL_SENSORS
     ]
     if data["cloud"] is not None:
+        c = data["cloud"]
         entities += [
-            CloudHeadline(data["cloud"], device, device_id),
-            CloudStory(data["cloud"], device, device_id),
-            CloudSavings(data["cloud"], device, device_id),
-            CloudNextEvent(data["cloud"], device, device_id),
+            CloudHeadline(c, device, device_id),
+            CloudStory(c, device, device_id),
+            CloudSavings(c, device, device_id),
+            CloudNextEvent(c, device, device_id),
+            # The automation-grade set: timestamps and money an automation
+            # can trigger on, not prose.
+            CloudTimestamp(c, device, device_id, "cheapStart", "cheap_rate_starts", "Cheap rate starts"),
+            CloudTimestamp(c, device, device_id, "cheapEnd", "cheap_rate_ends", "Cheap rate ends"),
+            CloudTimestamp(c, device, device_id, "holdsUntil", "battery_holds_until", "Battery holds until"),
+            CloudPredictedSpend(c, device, device_id),
+            CloudEndSoc(c, device, device_id),
         ]
     add(entities)
 
@@ -138,3 +148,47 @@ class CloudNextEvent(_CloudBase):
             "rate_per_kwh": (ev.get("rateMinorPerKwh") or 0) / 100,
             "expected_net": (ev.get("netMinor") or 0) / 100,
         }
+
+
+class CloudTimestamp(_CloudBase):
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator, device, device_id, key, suffix, name):
+        super().__init__(coordinator, device, device_id, suffix, name)
+        self._key = key
+
+    @property
+    def native_value(self):
+        iso = (self.coordinator.data or {}).get(self._key)
+        if not iso:
+            return None
+        try:
+            return datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+
+
+class CloudPredictedSpend(_CloudBase):
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_native_unit_of_measurement = "GBP"
+
+    def __init__(self, coordinator, device, device_id):
+        super().__init__(coordinator, device, device_id, "predicted_spend", "Predicted spend (24h)")
+
+    @property
+    def native_value(self):
+        v = (self.coordinator.data or {}).get("predictedSpendMinor")
+        return round(v / 100, 2) if v is not None else None
+
+
+class CloudEndSoc(_CloudBase):
+    _attr_device_class = SensorDeviceClass.BATTERY
+    _attr_native_unit_of_measurement = "%"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, device, device_id):
+        super().__init__(coordinator, device, device_id, "end_of_day_soc", "Projected end-of-day charge")
+
+    @property
+    def native_value(self):
+        return (self.coordinator.data or {}).get("endSocPct")

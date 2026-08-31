@@ -27,7 +27,7 @@ from .const import (
     LOCAL_INTERVAL_SECONDS,
 )
 
-PLATFORMS = ["sensor"]
+PLATFORMS = ["binary_sensor", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
