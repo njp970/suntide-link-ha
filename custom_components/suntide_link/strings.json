@@ -1,0 +1,16 @@
+{
+  "config": {
+    "step": {
+      "confirm": {
+        "title": "Found your Suntide Link",
+        "description": "{device} is on your network. Add a Suntide cloud token for the plan, story and savings entities — or leave it blank for local sensors only (you can add it later by re-adding the integration).",
+        "data": { "cloud_token": "Suntide cloud token (optional)" }
+      },
+      "user": {
+        "title": "Suntide Link",
+        "data": { "host": "Link address (e.g. 192.168.0.42)" }
+      }
+    },
+    "abort": { "already_configured": "This Link is already set up." }
+  }
+}
