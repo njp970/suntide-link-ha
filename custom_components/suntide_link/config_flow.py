@@ -12,7 +12,11 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.components.zeroconf import ZeroconfServiceInfo
+try:
+    # HA ≥2025: the canonical home
+    from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
+except ImportError:  # older HA
+    from homeassistant.components.zeroconf import ZeroconfServiceInfo
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 
 from .const import CONF_CLOUD_TOKEN, CONF_DEVICE_ID, CONF_HOST, DOMAIN

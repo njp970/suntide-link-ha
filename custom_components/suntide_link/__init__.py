@@ -8,8 +8,10 @@ plan/story/savings entities go unavailable.
 
 from __future__ import annotations
 
+import asyncio
+import logging
+
 import aiohttp
-import async_timeout
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -37,17 +39,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def fetch_local():
         try:
-            async with async_timeout.timeout(3):
+            async with asyncio.timeout(3):
                 resp = await session.get(f"http://{host}/api/v1/state")
                 if resp.status != 200:
                     raise UpdateFailed(f"Link answered {resp.status}")
                 return await resp.json()
-        except (aiohttp.ClientError, TimeoutError) as err:
+        except (aiohttp.ClientError, TimeoutError, asyncio.TimeoutError) as err:
             raise UpdateFailed(f"Link unreachable: {err}") from err
 
     local = DataUpdateCoordinator(
         hass,
-        __import__("logging").getLogger(__name__),
+        logging.getLogger(__name__),
         name=f"{DOMAIN}_local",
         update_method=fetch_local,
         update_interval=timedelta(seconds=LOCAL_INTERVAL_SECONDS),
@@ -58,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         async def fetch_cloud():
             try:
-                async with async_timeout.timeout(15):
+                async with asyncio.timeout(15):
                     resp = await session.get(
                         f"{CLOUD_BASE}/api/ext/v1/overview",
                         headers={"Authorization": f"Bearer {token}"},
@@ -68,12 +70,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     if resp.status != 200:
                         raise UpdateFailed(f"cloud answered {resp.status}")
                     return await resp.json()
-            except (aiohttp.ClientError, TimeoutError) as err:
+            except (aiohttp.ClientError, TimeoutError, asyncio.TimeoutError) as err:
                 raise UpdateFailed(f"cloud unreachable: {err}") from err
 
         cloud = DataUpdateCoordinator(
             hass,
-            __import__("logging").getLogger(__name__),
+            logging.getLogger(__name__),
             name=f"{DOMAIN}_cloud",
             update_method=fetch_cloud,
             update_interval=timedelta(seconds=CLOUD_INTERVAL_SECONDS),
