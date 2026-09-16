@@ -3,31 +3,64 @@
     "step": {
       "confirm": {
         "title": "Found your Suntide Link",
-        "description": "{device} is on your network. Add a Suntide cloud token for the plan, story and savings entities \u2014 or leave it blank for local sensors only (you can add it later by re-adding the integration).",
+        "description": "{device} is on your network.\n\nTo read it, Home Assistant needs the Link's local access token. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access.\n\nIf you add your Suntide cloud token, the local access token is fetched for you and you get the plan, story and savings entities too. Otherwise, paste the local access token shown in the app. You can change either later from the integration's Configure button.",
         "data": {
-          "cloud_token": "Suntide cloud token (optional)"
+          "cloud_token": "Suntide cloud token (optional)",
+          "local_token": "Local access token (shown in the Suntide app)"
         }
       },
       "user": {
         "title": "Suntide Link",
+        "description": "Enter the Link's address on your network. Adding its Link ID (for example link-0002, shown in the Suntide app) lets your cloud token fetch the local access token for you.",
         "data": {
-          "host": "Link address (e.g. 192.168.0.42)"
+          "host": "Link address (for example 192.168.0.42)",
+          "device_id": "Link ID (optional)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Your Suntide Link needs its local access token",
+        "description": "{device} refused Home Assistant's request. Its firmware now asks for a local access token, or the token has changed. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access.\n\nThen paste the token shown there. If this Link has a Suntide cloud token saved, you can leave the box empty and the token is fetched for you.",
+        "data": {
+          "local_token": "Local access token (shown in the Suntide app)"
         }
       }
     },
+    "error": {
+      "local_access_off": "Local access is off for this Link. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access. Then try again.",
+      "link_not_in_account": "This Link is not in the Suntide account that the cloud token belongs to. Check the token, or paste the local access token shown in the Suntide app.",
+      "invalid_cloud_token": "Suntide did not accept the cloud token. It may have been revoked. Create a new one in the Suntide app (Settings, then Integrations).",
+      "cloud_unreachable": "Suntide could not be reached to fetch the local access token. Paste the token shown in the Suntide app instead, or try again shortly.",
+      "invalid_local_token": "The Link did not accept that local access token. Check it against the one shown in the Suntide app. If you have just turned local access on or made a new token, give the Link a minute and try again.",
+      "local_token_required": "This Link needs its local access token. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access. Then paste the token shown there, or add your Suntide cloud token and it will be fetched for you.",
+      "invalid_token_format": "A local access token is 32 characters, using only the numbers 0 to 9 and the letters a to f. Copy it again from the Suntide app.",
+      "cannot_connect": "Home Assistant could not reach the Link at that address. Check that it has power and is on your Wi-Fi.",
+      "invalid_device_id": "A Link ID uses only letters, numbers and hyphens, for example link-0002."
+    },
     "abort": {
-      "already_configured": "This Link is already set up."
+      "already_configured": "This Link is already set up.",
+      "reauth_successful": "Done. Home Assistant is reading your Link again."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Suntide cloud token",
-        "description": "Paste a token from the Suntide app (Settings \u2192 Integrations). Leave empty to use local sensors only.",
+        "title": "Suntide tokens",
+        "description": "Cloud token: paste one from the Suntide app (Settings, then Integrations) for the plan, story and savings entities, or leave it empty for local sensors only.\n\nLocal access token: leave it empty to fetch it again with your cloud token (or to keep the saved one), or paste the token shown in the Suntide app.",
         "data": {
-          "cloud_token": "Cloud token"
+          "cloud_token": "Cloud token",
+          "local_token": "Local access token (shown in the Suntide app)"
         }
       }
+    },
+    "error": {
+      "local_access_off": "Local access is off for this Link. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access. Then try again.",
+      "link_not_in_account": "This Link is not in the Suntide account that the cloud token belongs to. Check the token, or paste the local access token shown in the Suntide app.",
+      "invalid_cloud_token": "Suntide did not accept the cloud token. It may have been revoked. Create a new one in the Suntide app (Settings, then Integrations).",
+      "cloud_unreachable": "Suntide could not be reached to fetch the local access token. Paste the token shown in the Suntide app instead, or try again shortly.",
+      "invalid_local_token": "The Link did not accept that local access token. Check it against the one shown in the Suntide app. If you have just turned local access on or made a new token, give the Link a minute and try again.",
+      "local_token_required": "This Link needs its local access token. In the Suntide app, open Settings, then your Link, and turn on Home Assistant and local access. Then paste the token shown there, or add your Suntide cloud token and it will be fetched for you.",
+      "invalid_token_format": "A local access token is 32 characters, using only the numbers 0 to 9 and the letters a to f. Copy it again from the Suntide app.",
+      "cannot_connect": "Home Assistant could not reach the Link at that address. Check that it has power and is on your Wi-Fi."
     }
   }
 }

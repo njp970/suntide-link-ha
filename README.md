@@ -11,6 +11,10 @@ Works with a [Suntide Link](https://suntide.energy) — the small box that
 connects to your inverter locally and does the reading your cloud app was
 never fast enough for.
 
+> **Upgrading to 0.3.0?** Before your Link updates to firmware 0.17.0, turn
+> on Home Assistant and local access for it in the Suntide app, then update
+> this integration. See [Local access token](#local-access-token).
+
 ---
 
 ## Why this exists
@@ -108,22 +112,44 @@ action:
 2. Install **Suntide Link**, restart Home Assistant.
 3. Settings → Devices & Services — your Link is **discovered automatically**
    (it announces itself on your network; nothing to type).
-4. Optionally paste a **cloud token** from the Suntide app
-   (Settings → Integrations) to add the intelligence entities.
-   Skip it for local-only; you can add it later by re-adding the integration.
+4. In the Suntide app, open Settings, then your Link, and turn on
+   **Home Assistant and local access**.
+5. Either paste a **cloud token** from the Suntide app
+   (Settings → Integrations), which also fetches the Link's local access
+   token for you and adds the intelligence entities, or paste the
+   **local access token** the app shows for your Link (local sensors only).
+   You can change either later with the integration's **Configure** button.
+
+### Local access token
+
+From firmware 0.17.0 the Link answers Home Assistant only when the request
+carries its local access token. The token is made when you turn on Home
+Assistant and local access for the Link in the Suntide app, and the app
+shows it there. Local access is off until you turn it on.
+
+- **With a cloud token**, the integration fetches the local access token
+  from your Suntide account; you never type it.
+- **Without one**, paste the token from the app.
+- **If the Link refuses the token** (it has just updated, or you made a new
+  token in the app), Home Assistant shows a re-authenticate prompt. With a
+  cloud token saved, leave the box empty and the new token is fetched.
+- Links on firmware before 0.17.0 ignore the token, so setting it early is
+  harmless and saves a prompt later.
 
 ### Manual discovery fallback
 
 If your network filters mDNS (some mesh systems, VLAN setups): add the
-integration by hand and enter the Link's IP address. Everything else is
-identical.
+integration by hand and enter the Link's IP address, and its Link ID (for
+example `link-0002`, shown in the Suntide app) so a cloud token can fetch
+the local access token. Everything else is identical.
 
 ## Data & privacy — the plain version
 
 - **The fast lane never leaves your house.** Local sensors talk directly to
-  the Link over HTTP on your LAN.
-- **The cloud token is read-only and scoped.** It reaches exactly one
-  endpoint (a summary of your own account) and nothing else. It cannot
+  the Link over HTTP on your LAN, with the Link's local access token. The
+  token is never written to Home Assistant's log.
+- **The cloud token is read-only and scoped.** It reaches a summary of your
+  own account and your own Links' local access tokens, and nothing else. It cannot
   change settings, cannot write to your inverter, and you can revoke it any
   time in the Suntide app — revocation takes effect on the next request.
 - **Cancel your subscription and this keeps working.** The local entities
@@ -136,6 +162,8 @@ identical.
 |---|---|
 | Power entities `unavailable` | HA can't reach the Link — check it has power and Wi-Fi; if its IP changed and discovery is filtered, re-add with the new address |
 | Cloud entities `unavailable`, local fine | Suntide's API is unreachable or your token was revoked — check the integration's log line; mint a fresh token in the app if needed |
+| "Re-authenticate" prompt for the Link | The Link refused its local access token. Turn on Home Assistant and local access for it in the Suntide app, then open the prompt: leave it empty if you have a cloud token saved, or paste the token from the app |
+| "Local access is off for this Link" | Turn on Home Assistant and local access for this Link in the Suntide app, then try again |
 | Values frozen | They shouldn't be: local entities update every second. A frozen value with `available` state is a bug — please open an issue |
 | Discovered device shows an odd name | The Link announces its device id (e.g. `link-bench-01`); rename the device in HA as you like |
 
@@ -153,7 +181,15 @@ the right side.
 ## Development
 
 Plain Home Assistant custom integration: `config_flow` + `DataUpdateCoordinator`,
-no external requirements. PRs welcome — especially additional language
+no external requirements. Tests use `pytest-homeassistant-custom-component`
+(Python 3.13):
+
+```
+pip install -r requirements_test.txt
+pytest
+```
+
+PRs welcome, especially additional language
 translations under `custom_components/suntide_link/translations/`.
 
 ## License

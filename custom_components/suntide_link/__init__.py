@@ -15,6 +15,7 @@ import aiohttp
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from datetime import timedelta
@@ -22,12 +23,13 @@ from datetime import timedelta
 from .const import (
     CLOUD_BASE,
     CLOUD_INTERVAL_SECONDS,
-    CONF_CLOUD_TOKEN,
     CONF_DEVICE_ID,
     CONF_HOST,
     DOMAIN,
     LOCAL_INTERVAL_SECONDS,
 )
+from .config_flow import configured_cloud_token, configured_local_token
+from .local_auth import local_headers, local_url
 
 PLATFORMS = ["binary_sensor", "sensor"]
 
@@ -38,12 +40,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     host = entry.data[CONF_HOST]
     # Options win over the original setup data, so a rotated token takes
     # effect without deleting the device.
-    token = entry.options.get(CONF_CLOUD_TOKEN) or entry.data.get(CONF_CLOUD_TOKEN)
+    token = configured_cloud_token(entry)
+    # From Link firmware 0.17.0 the local REST needs the local access token.
+    # An entry made before 0.3.0 has none: it is tried without, and the
+    # first 401 starts Home Assistant's re-authentication. Never logged.
+    headers = local_headers(configured_local_token(entry))
+    state_url = local_url(host, "/api/v1/state")
 
     async def fetch_local():
         try:
             async with asyncio.timeout(3):
-                resp = await session.get(f"http://{host}/api/v1/state")
+                resp = await session.get(state_url, headers=headers)
+                if resp.status == 401:
+                    raise ConfigEntryAuthFailed(
+                        "The Link refused the local access token. Turn on Home Assistant "
+                        "and local access for it in the Suntide app, then re-authenticate."
+                    )
                 if resp.status != 200:
                     raise UpdateFailed(f"Link answered {resp.status}")
                 return await resp.json()
@@ -69,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         headers={"Authorization": f"Bearer {token}"},
                     )
                     if resp.status == 401:
-                        raise UpdateFailed("token revoked — mint a new one in the Suntide app")
+                        raise UpdateFailed("cloud token revoked: create a new one in the Suntide app")
                     if resp.status != 200:
                         raise UpdateFailed(f"cloud answered {resp.status}")
                     return await resp.json()

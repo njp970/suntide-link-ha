@@ -9,3 +9,6 @@ your automations can react to.
   running.
 - Zeroconf discovery: the Link appears by itself; nothing to type.
 - Cloud token optional, read-only, revocable in the Suntide app.
+- **Upgrading to 0.3.0?** Before your Link updates to firmware 0.17.0, turn
+  on Home Assistant and local access for it in the Suntide app, then update
+  this integration.
